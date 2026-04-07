@@ -1,0 +1,19 @@
+# Flex generated
+lex.yy.c
+
+# Bison generated
+parser.tab.c
+parser.tab.h.bison
+
+# Compiled binaries
+lexer_test
+compiler
+*.exe
+*.o
+*.out
+
+# macOS
+.DS_Store
+
+# AI helper files
+AGENTS.md
