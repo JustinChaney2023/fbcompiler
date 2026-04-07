@@ -3,9 +3,9 @@
 A mini programming language compiler built with Flex and Bison for our Programming Language Concepts course.
 
 **Team:**
-- Justin - Lexer (Due 4/8)
-- Aaron - Parser (Due 4/10)  
-- Ethan - Project Report & Presentation (Due 4/12)
+- Justin
+- Aaron 
+- Ethan 
 
 ---
 
@@ -78,7 +78,7 @@ echo "int x = 5;" | ./lexer_test
 
 ### Build Full Compiler (When Parser Ready)
 ```bash
-# Once Aaron adds parser.y:
+# future
 bison -d parser.y          # Generate parser
 flex lexer.l               # Generate lexer
 gcc parser.tab.c lex.yy.c -o compiler
