@@ -225,6 +225,11 @@ expr:
         $$.val = $1.val - $3.val;
     
     }
+    | MINUS expr
+    {
+        $$.type = $2.type;
+        $$.val = -$2.val;
+    }
     | expr MULT expr        
     {
         /*if($1.type == TYPE_BOOL || $3.type == TYPE_BOOL)
