@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "types.h"
 #include "parser.tab.h"
 
 %}
@@ -60,6 +61,7 @@ WS         [ \t\r\n]+
 ">="            { return GE;  }
 "&&"            { return AND; }
 "||"            { return OR;  }
+"!="            { return NEQ; }
 
     /* Single-char operators */
 "="             { return ASSIGN; }
