@@ -78,6 +78,13 @@ void update(char* name, float val)
     printf("Error: undeclared variable assignment %s \n", name);
 }
 
+void free_symbols()
+{
+    for(int i=0; i<symbol_count; i++)
+    {
+        free(table[i].name);
+    }
+}
 
 Type type_result(Type a, Type b)
 {
@@ -154,6 +161,19 @@ Node* make_assign_node(char* name, Node* expr)
     n->right = expr;
     n->left = NULL;
     return n;
+};
+
+void free_ast(Node* n)
+{
+    if (!n) return;
+
+    free_ast(n->left);
+    free_ast(n->right);
+
+    if (n->name)
+        free(n->name);
+
+    free(n);
 };
 
 
@@ -629,6 +649,8 @@ int main()
 
     yyparse();
     eval_stmt(root);
+    free_ast(root);
+    free_symbols();
 
     return 0;
 }
