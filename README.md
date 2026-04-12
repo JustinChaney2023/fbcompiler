@@ -2,6 +2,12 @@
 
 A mini programming language compiler built with Flex and Bison for our Programming Language Concepts course.
 
+## Compiler Overview
+
+The project uses Flex for lexical analysis and Bison for parsing.  
+The lexer converts source code into tokens, and the parser checks that those tokens follow the language grammar.  
+The parser also drives interpretation of valid programs, including variable declarations, assignments, arithmetic and boolean expressions, branching, loops, trig functions, and printing.
+
 **Team:**
 - Justin
 - Aaron
