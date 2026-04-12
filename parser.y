@@ -245,7 +245,7 @@ Value eval_expr(Node* n)
             Value a = eval_expr(n->left);
             Value b = eval_expr(n->right);
 
-            return (Value){a.val  <= b.val , type_result(a.type, b.type)};
+            return (Value){a.val  >= b.val , type_result(a.type, b.type)};
         }
 
         case NODE_AND:
@@ -253,7 +253,7 @@ Value eval_expr(Node* n)
             Value a = eval_expr(n->left);
             Value b = eval_expr(n->right);
 
-            return (Value){a.val  && b.val , type_result(a.type, b.type)};
+            return (Value){(a.val != 0)  && (b.val != 0), type_result(a.type, b.type)};
         }
 
         case NODE_OR:
@@ -261,7 +261,7 @@ Value eval_expr(Node* n)
             Value a = eval_expr(n->left);
             Value b = eval_expr(n->right);
 
-            return (Value){a.val  || b.val , type_result(a.type, b.type)};
+            return (Value){(a.val != 0)  || (b.val != 0) , type_result(a.type, b.type)};
         }
 
         case NODE_LT:
@@ -358,8 +358,7 @@ void eval_stmt(Node* n)
 
         case NODE_WHILE:
         {
-            Value a = eval_expr(n->left);
-            while(a.val)
+            while(eval_expr(n->left).val)
             {
                 eval_stmt(n->right);
             }
@@ -378,7 +377,7 @@ void eval_stmt(Node* n)
 
         case NODE_IFELSE:
         {
-            Value a = eval_expr(n->left);
+            Value a = eval_expr(n->left->left);
             if(a.val)
             {
                 eval_stmt(n->left->right);
@@ -486,7 +485,6 @@ stmt:
       }
     | IDENTIFIER ASSIGN expr SEMICOLON
     {
-        Symbol s = lookup($1);
 
         $$ = make_assign_node($1, $3);
     }
