@@ -6,15 +6,25 @@
 #include <math.h>
 #include <string.h>
 #include "types.h"
+#include "node.h"
 #define MAX_SYMBOLS 100
 
+Node* root;
 
-typedef struct{
+
+typedef struct
+{
     char* name;
     Type type;
     float val;
 
 } Symbol;
+
+typedef struct
+{
+    float val;
+    Type type;
+}Value;
 
 Type type_result(Type a, Type b);
 void insert(char* name, Type type, float val);
@@ -23,6 +33,9 @@ void update(char* name, float val);
 
 int yylex(void);
 void yyerror(const char *s);
+
+Value eval_expr(Node* n);
+void eval_stmt(Node* n);
 
 Symbol table[MAX_SYMBOLS];
 int symbol_count = 0;
@@ -66,7 +79,6 @@ void update(char* name, float val)
 }
 
 
-
 Type type_result(Type a, Type b)
 {
     if (a == TYPE_BOOL || b == TYPE_BOOL)
@@ -75,6 +87,309 @@ Type type_result(Type a, Type b)
         return TYPE_FLOAT;
     return TYPE_INT;
 
+};
+
+Node* make_node(int kind, Node* left, Node* right)
+{
+    Node* n = malloc(sizeof(Node));
+    n->kind = kind;
+    n->left = left;
+    n->right = right;
+    n->val = 0;
+    n->name = NULL;
+    return n;
+};
+
+Node* make_int_node(float val)
+{
+    Node* n = malloc(sizeof(Node));
+    n->kind = NODE_INT;
+    n->val = val;
+    n->left = NULL;
+    n->right = NULL;
+    n->name = NULL;
+    return n;
+};
+
+Node* make_float_node(float val)
+{
+    Node* n = malloc(sizeof(Node));
+    n->kind = NODE_FLOAT;
+    n->val = val;
+    n->left = NULL;
+    n->right = NULL;
+    n->name = NULL;
+    return n;
+};
+
+
+
+Node* make_ident_node(char* name)
+{
+    Node* n = malloc(sizeof(Node));
+    n->kind = NODE_IDENT;
+    n->name = strdup(name);
+    n->left =  NULL;
+    n->right = NULL;
+    return n;
+};
+
+
+Node* make_dec_assign_node(int type, char* name, Node* expr)
+{
+    Node* n = malloc(sizeof(Node));
+    n->kind = NODE_DEC_ASSIGN;
+    n->name = strdup(name);
+    n->right = expr;
+    n->left = NULL;
+    n->val = type;
+    return n;
+}
+
+Node* make_assign_node(char* name, Node* expr)
+{
+    Node* n = malloc(sizeof(Node));
+    n->kind = NODE_ASSIGN;
+    n->name = strdup(name);
+    n->right = expr;
+    n->left = NULL;
+    return n;
+};
+
+
+
+Value eval_expr(Node* n)
+{
+    switch(n->kind)
+    {
+        case NODE_INT:
+            return (Value){n->val, TYPE_INT};
+
+        case NODE_FLOAT:
+            return (Value){n->val, TYPE_FLOAT};
+
+        case NODE_BOOL:
+            return (Value){n->val, TYPE_BOOL};
+
+        case NODE_IDENT:
+        {
+            Symbol s = lookup(n->name);
+            return (Value){s.val, s.type};
+        }
+
+        case NODE_ADD:
+        {
+            Value a = eval_expr(n->left);
+            Value b = eval_expr(n->right);
+        
+            return (Value){a.val + b.val , type_result(a.type, b.type)};
+        }
+
+        case NODE_SUB:
+        {
+            Value a = eval_expr(n->left);
+            Value b = eval_expr(n->right);
+
+            return (Value){a.val  - b.val , type_result(a.type, b.type)};
+        }
+        case NODE_MUL:
+        {
+            Value a = eval_expr(n->left);
+            Value b = eval_expr(n->right);
+
+            return (Value){a.val  * b.val , type_result(a.type, b.type)};
+        }
+
+        case NODE_DIV:
+        {
+            Value a = eval_expr(n->left);
+            Value b = eval_expr(n->right);
+
+            return (Value){a.val  / b.val , type_result(a.type, b.type)};
+        }
+
+        case NODE_MOD:
+        {
+            Value a = eval_expr(n->left);
+            Value b = eval_expr(n->right);
+
+            return (Value){(int)a.val  % (int)b.val , type_result(a.type, b.type)};
+        }   
+
+        case NODE_EQ:
+        {
+            Value a = eval_expr(n->left);
+            Value b = eval_expr(n->right);
+
+            return (Value){a.val  == b.val , type_result(a.type, b.type)};
+        }
+
+        case NODE_NEQ:
+        {
+            Value a = eval_expr(n->left);
+            Value b = eval_expr(n->right);
+
+            return (Value){a.val  != b.val , type_result(a.type, b.type)};
+        }
+
+        case NODE_LE:
+        {
+            Value a = eval_expr(n->left);
+            Value b = eval_expr(n->right);
+
+            return (Value){a.val  <= b.val , type_result(a.type, b.type)};
+        }
+
+        case NODE_GE:
+        {
+            Value a = eval_expr(n->left);
+            Value b = eval_expr(n->right);
+
+            return (Value){a.val  <= b.val , type_result(a.type, b.type)};
+        }
+
+        case NODE_AND:
+        {
+            Value a = eval_expr(n->left);
+            Value b = eval_expr(n->right);
+
+            return (Value){a.val  && b.val , type_result(a.type, b.type)};
+        }
+
+        case NODE_OR:
+        {
+            Value a = eval_expr(n->left);
+            Value b = eval_expr(n->right);
+
+            return (Value){a.val  || b.val , type_result(a.type, b.type)};
+        }
+
+        case NODE_LT:
+        {
+            Value a = eval_expr(n->left);
+            Value b = eval_expr(n->right);
+
+            return (Value){a.val  < b.val , type_result(a.type, b.type)};
+        }
+
+        case NODE_GT:
+        {
+            Value a = eval_expr(n->left);
+            Value b = eval_expr(n->right);
+
+            return (Value){a.val  > b.val , type_result(a.type, b.type)};
+        }
+
+        case NODE_UMIN:
+        {
+            Value a = eval_expr(n->left);
+
+            return (Value){-a.val , a.type};
+        }
+
+        case NODE_NOT:
+        {
+            Value a = eval_expr(n->left);
+            
+            return (Value){!a.val , a.type};
+        }
+
+        case NODE_SIN:
+        {
+            Value a = eval_expr(n->left);
+
+            return (Value){sin(a.val), TYPE_FLOAT};
+        }
+
+        case NODE_COS:
+        {
+            Value a = eval_expr(n->left);
+
+            return (Value){cos(a.val), TYPE_FLOAT};
+        }
+        case NODE_TAN:
+        {
+            Value a = eval_expr(n->left);
+
+            return (Value){tan(a.val), TYPE_FLOAT};
+        }
+    }
+    return (Value){0, TYPE_FLOAT};
+};
+
+void eval_stmt(Node* n)
+{
+
+    switch(n->kind)
+    {
+        case NODE_STMTS:
+        {
+            if(n->left) eval_stmt(n->left);
+            if(n->right) eval_stmt(n->right);
+            break;
+        }
+
+        case NODE_DEC_ASSIGN:
+        {
+            Value a = eval_expr(n->right);
+            float val = a.val;
+            insert(n->name, n->val, val);
+            break;
+        }
+        case NODE_ASSIGN:
+        {
+            Value a = eval_expr(n->right);
+            float val = a.val;
+            update(n->name, val);
+            break;
+        }
+
+        case NODE_PRINT:
+        {
+            Value a = eval_expr(n->left);
+            if(a.type == TYPE_BOOL)
+                printf("%s\n", a.val ? "true" : "false");
+            else if (a.type == TYPE_INT)
+                printf("%d\n", (int)a.val);
+            else
+                printf("%f\n", a.val);  
+            break;
+        }
+
+        case NODE_WHILE:
+        {
+            Value a = eval_expr(n->left);
+            while(a.val)
+            {
+                eval_stmt(n->right);
+            }
+            break;
+        }
+
+        case NODE_IF:
+        {
+            Value a = eval_expr(n->left);
+            if(a.val)
+            {
+                eval_stmt(n->right);
+            }
+            break;
+        }
+
+        case NODE_IFELSE:
+        {
+            Value a = eval_expr(n->left);
+            if(a.val)
+            {
+                eval_stmt(n->left->right);
+            }
+            else
+            {
+                eval_stmt(n->right);
+            }
+            break;
+        }
+    }
 };
 
 %}
@@ -101,10 +416,13 @@ Type type_result(Type a, Type b)
         Type type;
         float val;
     }eval;
+
+    Node* node;
 }
 
-%type <eval> expr
 %type <ival> type
+%type <node> expr stmt stmts
+
 
 %token <sval> IDENTIFIER
 %token <fval> FLOAT_LITERAL
@@ -150,204 +468,148 @@ Type type_result(Type a, Type b)
 
 
 stmts:
-      stmt          
-    | stmts stmt    
+        stmt    
+        {
+            $$ = $1;
+            root = $$;
+        }      
+        | stmts stmt   
+        {
+            $$ = make_node(NODE_STMTS, $1, $2);
+            root = $$;
+        }   
 
 stmt:
       type IDENTIFIER ASSIGN expr SEMICOLON
       {
-        if($1 != $4.type)
-            printf("Type error: expression does not match\n");
-        else
-            insert($2, $1, $4.val);
+            $$ = make_dec_assign_node($1, $2, $4);
       }
     | IDENTIFIER ASSIGN expr SEMICOLON
     {
         Symbol s = lookup($1);
 
-        if(s.type != $3.type)
-            printf("Type error: expression does not match\n");
-        else
-            update($1, $3.val);
+        $$ = make_assign_node($1, $3);
     }
     | IF LPAREN expr RPAREN LBRACE stmts RBRACE ELSE LBRACE stmts RBRACE
     {
-        if($3.val)
-        {
-
-        }
-        else
-        {
-
-        }
+        
+        $$ = make_node(NODE_IFELSE, make_node(NODE_IF, $3, $6), $10);
     }
     | IF LPAREN expr RPAREN LBRACE stmts RBRACE
     {
-        if($3.val)
-        {
-            //I hate you you fucking nigger bitch ass
-        }
+        $$ = make_node(NODE_IF, $3, $6);
     }
     | WHILE LPAREN expr RPAREN LBRACE stmts RBRACE
     {
-        while($3.val)
-        {
-            //fix me boy *in a racist tone*
-        }
+        $$ = make_node(NODE_WHILE, $3, $6);
     }
-    | PRINT LPAREN IDENTIFIER RPAREN SEMICOLON
+    | PRINT LPAREN expr RPAREN SEMICOLON
     {
-        Symbol s = lookup($3);
-        if(s.type == TYPE_FLOAT)
-            printf("%f\n", s.val);
-        else if(s.type == TYPE_INT)
-            printf("%d\n", (int)s.val);
-        else if(s.type == TYPE_BOOL)
-            printf("%d\n", (int)s.val);
+        $$ = make_node(NODE_PRINT, $3, NULL);
     }
 ;
 
 expr:
-      expr PLUS expr        
-      {
-        /*if($1.type == TYPE_BOOL || $3.type == TYPE_BOOL)
-            printf("Type error: cannot do arithmetic with bool\n");*/
-
-        $$.type = type_result($1.type, $3.type);
-        $$.val = $1.val + $3.val;
-      }
+    expr PLUS expr        
+    {
+        $$ = make_node(NODE_ADD, $1, $3);
+    }
     | expr MINUS expr       
     {
-        /*if($1.type == TYPE_BOOL || $3.type == TYPE_BOOL)
-            printf("Type error: cannot do arithmetic with bool\n");*/
-
-        $$.type = type_result($1.type, $3.type);
-        $$.val = $1.val - $3.val;
-    
+        $$ = make_node(NODE_SUB, $1, $3);
     }
     | MINUS expr
     {
-        $$.type = $2.type;
-        $$.val = -$2.val;
+        $$ = make_node(NODE_UMIN, $2, NULL);
     }
     | expr MULT expr        
     {
-        /*if($1.type == TYPE_BOOL || $3.type == TYPE_BOOL)
-            printf("Type error: cannot do arithmetic with bool\n");*/
+        $$ = make_node(NODE_MUL, $1, $3);
 
-        $$.type = type_result($1.type, $3.type);
-        $$.val = $1.val * $3.val;
-    
     }
     | expr DIV expr         
     {
-        /*if($1.type == TYPE_BOOL || $3.type == TYPE_BOOL)
-            printf("Type error: cannot do arithmetic with bool\n");*/
+        $$ = make_node(NODE_DIV, $1, $3);
 
-        $$.type = type_result($1.type, $3.type);
-        $$.val = $1.val / $3.val;
-    
     }
     | expr MOD expr         
     {
-        /*if($1.type == TYPE_BOOL || $3.type == TYPE_BOOL)
-            printf("Type error: cannot do arithmetic with bool\n");*/
-
-        $$.type = type_result($1.type, $3.type);
-        $$.val = (int)$1.val % (int)$3.val;
-    
+        $$ = make_node(NODE_MOD, $1, $3);
     }
     | expr EQ expr          
     {
-        $$.type = TYPE_BOOL;
-        $$.val = ($1.val == $3.val);
+        $$ = make_node(NODE_EQ, $1, $3);
     }
     | expr NEQ expr         
     {
-        $$.type = TYPE_BOOL;
-        $$.val = ($1.val != $3.val);
+        $$ = make_node(NODE_NEQ, $1, $3);
     }
     | expr LE expr          
     {
-        $$.type = TYPE_BOOL;
-        $$.val = ($1.val <= $3.val);
+        $$ = make_node(NODE_LE, $1, $3);
     }
     | expr GE expr          
     {
-        $$.type = TYPE_BOOL;
-        $$.val = ($1.val >= $3.val);
+        $$ = make_node(NODE_GE, $1, $3);
     }
     | expr AND expr         
     {
-        $$.type = TYPE_BOOL;
-        $$.val = ($1.val && $3.val);
+        $$ = make_node(NODE_AND, $1, $3);
     }
     | expr OR expr          
     {
-        $$.type = TYPE_BOOL;
-        $$.val = ($1.val || $3.val);
+        $$ = make_node(NODE_OR, $1, $3);
     }
     | expr LT expr          
     {
-        $$.type = TYPE_BOOL;
-        $$.val = ($1.val < $3.val);
+        $$ = make_node(NODE_LT, $1, $3);
     }
     | expr GT expr          
     {
-        $$.type = TYPE_BOOL;
-        $$.val = ($1.val > $3.val);
+        $$ = make_node(NODE_GT, $1, $3);
     }
     | NOT expr              
     {
-        $$.type = TYPE_BOOL;
-        $$.val = !($2.val);
+        $$ = make_node(NODE_NOT, $2, NULL);
     }
     | LPAREN expr RPAREN    
     {
-        $$.type = $2.type;
-        $$.val = $2.val;
+        $$ = $2;
     }
     | INT_LITERAL           
     {
-        $$.type = TYPE_INT;
-        $$.val = $1;
+       $$ = make_int_node($1);
     }
     | FLOAT_LITERAL         
     {
-        $$.type = TYPE_FLOAT;
-        $$.val = $1;
+       $$ = make_float_node($1);
     }
     | TRUE
     {
-        $$.type = TYPE_BOOL;
-        $$.val = 1;
+        $$ = make_node(NODE_BOOL, NULL, NULL);
+        $$->val = 1;
     }
     | FALSE
     {
-        $$.type = TYPE_BOOL;
-        $$.val = 0;
+        $$ = make_node(NODE_BOOL, NULL, NULL);
+        $$->val = 0;
     }
     | IDENTIFIER            
     {
-        Symbol s = lookup($1);
-
-        $$.type = s.type;
-        $$.val = s.val;
+        $$ = make_ident_node($1);
     }
     | SIN LPAREN expr RPAREN
     {
-        $$.type = TYPE_FLOAT;
-        $$.val = sin($3.val);
+        $$ = make_node(NODE_SIN, $3, NULL);
+
     }
     | COS LPAREN expr RPAREN
     {
-        $$.type = TYPE_FLOAT;
-        $$.val = cos($3.val);
+        $$ = make_node(NODE_COS, $3, NULL);
     }
     | TAN LPAREN expr RPAREN
     {
-        $$.type = TYPE_FLOAT;
-        $$.val = tan($3.val);
+        $$ = make_node(NODE_TAN, $3, NULL);
     }
     
 ;
@@ -368,6 +630,7 @@ int main()
 {
 
     yyparse();
+    eval_stmt(root);
 
     return 0;
 }

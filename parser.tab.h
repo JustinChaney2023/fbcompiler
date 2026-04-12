@@ -97,7 +97,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 95 "parser.y"
+#line 410 "parser.y"
 
     int ival;
     float fval;
@@ -108,7 +108,9 @@ union YYSTYPE
         float val;
     }eval;
 
-#line 112 "parser.tab.h"
+    Node* node;
+
+#line 114 "parser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
