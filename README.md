@@ -85,20 +85,20 @@ bison -d parser.y
 flex lexer.l
 
 # Compile compiler
-gcc parser.tab.c lex.yy.c -o minicompiler -lm
+gcc parser.tab.c lex.yy.c -o mycompiler -lm
 
 ---
 
 ## Running
 
 ### Run Interactively
-./minicompiler
+./mycompiler
 
 Then type your program directly into the terminal.
 When you are finished, press Ctrl+D to signal end of input.
 
 ### Run with an Input File
-./minicompiler < input_file.txt
+./mycompiler < input_file.txt
 
 ### Run the Lexer Test on a File
 ./lexer_test < test.txt
